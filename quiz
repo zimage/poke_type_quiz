@@ -1,0 +1,106 @@
+#!/usr/bin/env python
+import os
+
+usage = """ Run a Pokemon Go Types Quiz on the CLI
+
+Usage:
+    """ + os.path.basename(__file__) + """ [-A TYPE]... [-D TYPE]... [options]
+
+Options:
+    -A, --attack TYPE    Types of attacking moves
+    -D, --defender TYPE  Types of defending pokemon
+    -c, --count COUNT    Number of quiz rounds [default: 1]
+    -h, --help
+    -d, --debug
+
+"""
+from docopt import docopt
+from type_effectiveness import *
+
+all_types = {"Bug", "Dark", "Dragon", "Electric", "Fairy", "Fighting", "Fire", "Flying", "Ghost", "Grass", "Ground", "Ice", "Normal", "Poison", "Psychic", "Rock", "Steel", "Water"}
+
+def run_attack(types):
+    #types = {"Ice"}
+    attack_type = random.choice(tuple(types))
+    attack = Attack(attack_type)
+    switcher = {
+        0: { "effective_string": "strong against", "effective_against": attack.strong_against },
+        1: { "effective_string": "weak against", "effective_against": attack.weak_against },
+        2: { "effective_string": "ineffective against", "effective_against": attack.ineffective_against }
+        #3: { "effective_string": "normal against", "effective_against": attack.normal_against },
+    }
+    choice = switcher[random.randrange(len(switcher))]
+    return {"string": f"What pokemon types are {attack_type} moves {choice['effective_string']}?", "answers": set(choice['effective_against']())}
+
+def run_defender(types):
+    #types = {"Ice"}
+    defender_type = random.choice(tuple(types))
+    defender = Defender(defender_type)
+    switcher = {
+        0: { "effective_string": "immune to", "effective_from": defender.immune_to },
+        1: { "effective_string": "resistant to", "effective_from": defender.resistant_to },
+        2: { "effective_string": "vulnerable to", "effective_from": defender.vulnerable_to },
+        #3: { "effective_string": "very immune to", "effective_from": defender.very_immune_to },
+        #4: { "effective_string": "doubly vulnerable to", "effective_from": defender.doubly_vulnerable_to }
+        #5: { "effective_string": "neutral to", "effective_from": defender.neutral_to },
+    }
+    choice = switcher[random.randrange(len(switcher))]
+    return {"string": f"What attack types are {defender_type} Pokemon {choice['effective_string']}?", "answers": set(choice['effective_from']())}
+
+def get_answers():
+    input_valid = False
+    while not input_valid:
+        a = set(input().split())
+        if a == set(['None']):
+            a = set()
+        if len(a - all_types) == 0:
+            input_valid = True
+        else:
+            print("You entered an invalid type")
+    return a
+
+if __name__ == '__main__':
+    args = docopt(usage)
+
+    atypes = args['--attack']
+    if not atypes:
+        atypes = all_types
+
+    dtypes = args['--defender']
+    if not dtypes:
+        dtypes = all_types
+
+    count = int(args['--count'])
+    quiz = {}
+
+    round = 1
+    while round <= count:
+        print(f"Round {round}:")
+        round = round + 1
+        if (random.randrange(2) == 0):
+            quiz = run_attack(atypes)
+        else:
+            quiz = run_defender(dtypes)
+    
+        print(quiz["string"])
+        passed = False
+        attempt_count = 0
+        while not (passed or attempt_count == 3):
+            attempt_count = attempt_count + 1
+            a = get_answers()
+            if a == quiz["answers"]:
+                passed = True
+            else:
+                if attempt_count == 3:
+                    print(f"The correct list is {quiz['answers']}")
+                else:
+                    correct = a & quiz["answers"]
+                    incorrect = a - quiz["answers"]
+                    missing = quiz["answers"] - a
+
+                    if len(incorrect) == 0:
+                        print(f"There are {len(missing)} more.")
+                    elif len(missing) == 0:
+                        print(f"You guessed {len(incorrect)} wrong.")
+                    else:
+                        print(f"You guessed {len(incorrect)} wrong and there are {len(missing)} more.")
