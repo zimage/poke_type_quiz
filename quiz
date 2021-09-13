@@ -24,10 +24,10 @@ def run_attack(types):
     attack_type = random.choice(tuple(types))
     attack = Attack(attack_type)
     switcher = {
-        0: { "effective_string": "strong against", "effective_against": attack.strong_against },
-        1: { "effective_string": "weak against", "effective_against": attack.weak_against },
-        2: { "effective_string": "ineffective against", "effective_against": attack.ineffective_against }
-        #3: { "effective_string": "normal against", "effective_against": attack.normal_against },
+        0: { "effective_string": "strong (1.6x) against", "effective_against": attack.strong_against },
+        1: { "effective_string": "weak (0.63x) against", "effective_against": attack.weak_against },
+        2: { "effective_string": "ineffective (0.39x) against", "effective_against": attack.ineffective_against }
+        #3: { "effective_string": "normal (1x) against", "effective_against": attack.normal_against },
     }
     choice = switcher[random.randrange(len(switcher))]
     return {"string": f"What pokemon types are {attack_type} moves {choice['effective_string']}?", "answers": set(choice['effective_against']())}
@@ -37,12 +37,12 @@ def run_defender(types):
     defender_type = random.choice(tuple(types))
     defender = Defender(defender_type)
     switcher = {
-        0: { "effective_string": "immune to", "effective_from": defender.immune_to },
-        1: { "effective_string": "resistant to", "effective_from": defender.resistant_to },
-        2: { "effective_string": "vulnerable to", "effective_from": defender.vulnerable_to },
-        #3: { "effective_string": "very immune to", "effective_from": defender.very_immune_to },
-        #4: { "effective_string": "doubly vulnerable to", "effective_from": defender.doubly_vulnerable_to }
-        #5: { "effective_string": "neutral to", "effective_from": defender.neutral_to },
+        0: { "effective_string": "immune (0.39x) to", "effective_from": defender.immune_to },
+        1: { "effective_string": "resistant (0.63x) to", "effective_from": defender.resistant_to },
+        2: { "effective_string": "vulnerable (1.6x) to", "effective_from": defender.vulnerable_to },
+        #3: { "effective_string": "very immune (0.24x) to", "effective_from": defender.very_immune_to },
+        #4: { "effective_string": "doubly vulnerable (2.56x) to", "effective_from": defender.doubly_vulnerable_to }
+        #5: { "effective_string": "neutral (1x) to", "effective_from": defender.neutral_to },
     }
     choice = switcher[random.randrange(len(switcher))]
     return {"string": f"What attack types are {defender_type} Pokemon {choice['effective_string']}?", "answers": set(choice['effective_from']())}
@@ -74,6 +74,8 @@ if __name__ == '__main__':
     quiz = {}
 
     round = 1
+    first_try = 0
+    num_correct = 0
     while round <= count:
         print(f"Round {round}:")
         round = round + 1
@@ -90,6 +92,9 @@ if __name__ == '__main__':
             a = get_answers()
             if a == quiz["answers"]:
                 passed = True
+                num_correct = num_correct + 1
+                if attempt_count == 1:
+                    first_try = first_try + 1
             else:
                 if attempt_count == 3:
                     print(f"The correct list is {quiz['answers']}")
@@ -104,3 +109,7 @@ if __name__ == '__main__':
                         print(f"You guessed {len(incorrect)} wrong.")
                     else:
                         print(f"You guessed {len(incorrect)} wrong and there are {len(missing)} more.")
+    # Print Quiz Stats
+    print(f"Number correct: {num_correct}")
+    if first_try > 0:
+        print(f"Correct on First Try: {first_try}")
